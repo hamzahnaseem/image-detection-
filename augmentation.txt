@@ -1,0 +1,95 @@
+from PIL import Image
+from xml.dom import minidom
+import xml.etree.ElementTree as ET
+import math
+import os
+import imageio
+import imgaug as ia
+from imgaug.augmentables.bbs import BoundingBox, BoundingBoxesOnImage
+from imgaug import augmenters as iaa
+
+image_path = 'C:/Users/hamza/PycharmProjects/pythonProject/images'
+xml_path = 'C:/Users/hamza/PycharmProjects/pythonProject/xml'
+for filename in os.listdir('C:/Users/hamza/PycharmProjects/pythonProject/xml'):
+
+    mytree = ET.parse(xml_path + '/' + filename)
+    myroot = mytree.getroot()
+    xmin = []
+    for value in myroot.iter('filename'):
+        name = value.text
+
+    for value in myroot.iter('xmin'):
+        xmin.append(value.text)
+
+    print(xmin)
+
+    ymin = []
+    for value in myroot.iter('ymin'):
+        ymin.append(value.text)
+
+    print(ymin)
+
+    xmax = []
+    for value in myroot.iter('xmax'):
+        xmax.append(value.text)
+
+    print(xmax)
+
+    ymax = []
+    for value in myroot.iter('ymax'):
+        ymax.append(value.text)
+
+    print(ymax)
+
+    #img = Image.open('images.jpg')
+
+    image = imageio.imread(image_path + '/' + name)
+    bbs = BoundingBoxesOnImage([
+        BoundingBox(x1=xmin[0], x2=xmax[0], y1=ymin[0], y2=ymax[0]),
+        BoundingBox(x1=xmin[1], x2=xmax[1], y1=ymin[1], y2=ymax[1]),
+        BoundingBox(x1=xmin[2], x2=xmax[2], y1=ymin[2], y2=ymax[2]),
+        BoundingBox(x1=xmin[3], x2=xmax[3], y1=ymin[3], y2=ymax[3]),
+        BoundingBox(x1=xmin[4], x2=xmax[4], y1=ymin[4], y2=ymax[4]),
+    ], shape=image.shape)
+
+
+    #ia.imshow(bbs.draw_on_image(image))
+
+    image_aug, bbs_aug = iaa.Affine(rotate=4)(image=image, bounding_boxes=bbs)
+    ia.imshow(bbs_aug.draw_on_image(image_aug))
+
+
+
+
+
+    #before = bbs.bounding_boxes[i]
+    #after = bbs_aug.bounding_boxes[i]
+    index = 0
+    degree = 10
+    for x in range(3):
+        imageio.imwrite('C:/Users/hamza/PycharmProjects/pythonProject/images/myphoto' + str(x) + '.jpg',image_aug )
+        for prices in myroot.iter('xmin'):
+            after = bbs_aug.bounding_boxes[index]
+            prices.text = str(after.x1)
+            index = index + 1
+        index = 0
+        for prices in myroot.iter('ymin'):
+            after = bbs_aug.bounding_boxes[index]
+            prices.text = str(after.y1)
+            index = index + 1
+        index = 0
+        for prices in myroot.iter('xmax'):
+            after = bbs_aug.bounding_boxes[index]
+            prices.text = str(after.x2)
+            index = index + 1
+        index = 0
+        for prices in myroot.iter('ymax'):
+            after = bbs_aug.bounding_boxes[index]
+            prices.text = str(after.y2)
+            index = index + 1
+        index = 0
+        mytree.write('C:/Users/hamza/PycharmProjects/pythonProject/xml/myphoto' + str(x) + '.xml')
+        image_aug, bbs_aug = iaa.Affine(rotate=degree)(image=image, bounding_boxes=bbs)
+        degree = degree + 4
+
+    ia.imshow(bbs_aug.draw_on_image(image_aug))
